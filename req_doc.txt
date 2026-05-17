@@ -1,0 +1,399 @@
+3. Page-by-Page Functional Specification
+This section documents each page's purpose, UI components, operations available, and the 
+chatbot commands that map to those operations.
+3.1  Login Page  (/Account/Login)
+Route
+/Account/Login
+Access
+Public — All roles before authentication
+Controller
+AccountController → Login(), ExternalLogin()
+View
+Login.cshtml — centered card layout with university branding
+• Email/Student ID and password fields with show/hide toggle
+• Role auto-detection from credentials — no need for role selector dropdown
+• "Remember Me" checkbox for persistent session
+• Forgot Password link → /Account/ForgotPassword page
+• After login, user is redirected to their role-specific dashboard automatically
+• Chatbot command on login page: "Login" or "Sign in" — chatbot assists with credentials 
+guidance
+3.2  Role-Based Dashboard  (/Dashboard/Index)
+Route
+/Dashboard/Index
+Access
+All authenticated roles — UI and widgets change per role
+Controller
+DashboardController → Index() — detects role, loads role-specific 
+ViewModel
+View
+Dashboard/Index.cshtml with role-based partial view injection
+Student Dashboard Widgets:
+• GPA summary card, enrolled courses count, upcoming appointments countdown
+• Recent chatbot conversation history preview
+• Course recommendation quick-view (top 3 AI suggestions)
+• Notifications bell with unread count
+• Quick-action buttons: Book Appointment, Browse Courses, Open Chatbot
+Faculty Dashboard Widgets:
+• Courses assigned this semester with enrollment counts
+• Today's appointment schedule
+• Student feedback summary with sentiment indicator
+• Pending appointment requests requiring confirmation
+ASP.NET MVC | JavaScript | MSSQL | OpenAI / Dialogflow CX
+Page 
+Academic Chatbot Web Application v2.0 — Full Project Plan
+Confidential | 2024–25
+Admin Dashboard Widgets:
+• System-wide user counts by role, active sessions today
+• Chatbot session statistics (total sessions, resolution rate)
+• Sentiment trend sparkline (last 30 days)
+• Recent audit log entries
+• Chatbot command: "Go to dashboard" | "Home" | "Show my summary"
+3.3  Student Profile Page  (/Student/Profile)
+Route
+/Student/Profile
+Access
+Student (own profile only)
+Controller
+StudentController → Profile(), UpdateProfile()
+View
+Student/Profile.cshtml — two-column layout with photo and details
+• Profile photo upload with crop and resize (stored in /uploads/profiles/)
+• Personal details: name, email, phone, department, program, year, GPA
+• Advisor information with direct appointment booking shortcut
+• Academic history: all enrolled and completed courses with grades
+• Editable fields with inline save (AJAX) — no full page reload
+• Chatbot commands: "Show my profile" | "Update my phone to 9876543210" | "What is my 
+GPA?"
+3.4  Faculty Profile Page  (/Faculty/Profile)
+• Faculty details: designation, department, specialization, office room, hours
+• Public-facing info shown to students when booking appointments
+• Editable office hours with slot generation for AppointmentSlots table
+• Chatbot commands: "Update my office hours" | "Show my profile" | "Edit specialization"
+3.5  Course Catalog Page  (/Courses/Index)
+Route
+/Courses/Index
+Access
+All Roles
+Controller
+CoursesController → Index() with search, filter, pagination
+View
+Courses/Index.cshtml — card grid with filter sidebar
+• Search bar with real-time filtering (AJAX) by course name, code, department
+• Filter panel: Department, Semester, Credits, Availability
+• Course cards showing code, name, faculty, credits, enrolled/max count
+• Enroll button on each card (Student role) — triggers POST /api/courses/enroll
+• View Details link → /Courses/Detail/{id} dedicated detail page
+ASP.NET MVC | JavaScript | MSSQL | OpenAI / Dialogflow CX
+Page 
+Academic Chatbot Web Application v2.0 — Full Project Plan
+Confidential | 2024–25
+• Chatbot commands: "Show all courses" | "List CS department courses" | "Show 3-credit 
+courses"
+3.6  My Courses Page  (/Student/MyCourses)
+• List of all enrolled courses for current student with status and grade
+• Drop Course button on each row — confirmation modal before API call
+• Progress indicator: credits completed vs. program requirements
+• Chatbot commands: "Show my courses" | "Drop CS201" | "What courses am I enrolled in?"
+3.7  Course Management Page  (/Faculty/Courses)
+• Faculty-only: view all assigned courses with student roster per course
+• Add new course form → POST /api/courses (Admin/Faculty with permission)
+• Edit course details inline — credits, description, prerequisites
+• Grade entry panel: enter/update student grades per course
+• Chatbot commands: "Show my courses" | "Add course CS401" | "Enter grade for John — 
+A"
+3.8  Course Recommendations Page  (/Student/Recommendations)
+Route
+/Student/Recommendations
+Access
+Student
+Controller
+CourseRecommendationController → Index(), Accept(), Dismiss()
+View
+Student/Recommendations.cshtml — card list with AI reasoning displayed
+• AI-generated course recommendations based on GPA, department, completed courses, 
+program year
+• Each recommendation card shows: course name, reason text, match score (%), Enroll 
+button
+• Accept recommendation → directly enrolls student via API
+• Refresh button regenerates recommendations via chatbot AI engine
+• Chatbot commands: "Recommend courses" | "What should I study next?" | "Suggest 
+electives for me"
+3.9  Academic Policies Page  (/Policies/Index)
+Route
+/Policies/Index and /Policies/Detail/{id}
+Access
+All Roles
+Controller
+PoliciesController → Index(), Detail(), Search()
+View
+Policies/Index.cshtml — searchable accordion by category
+• Full-text search across all policy titles, content, and keywords
+ASP.NET MVC | JavaScript | MSSQL | OpenAI / Dialogflow CX
+Page 
+Academic Chatbot Web Application v2.0 — Full Project Plan
+Confidential | 2024–25
+• Category-based accordion: Grading, Attendance, Exams, Registration, Integrity, Financial 
+Aid
+• Each policy shows: title, effective date, version, full content with formatting
+• Admin-only: Add/Edit/Deactivate policy buttons visible only to Admin role
+• Chatbot integration: every question about policies triggers KB search against 
+AcademicPolicies table
+• Chatbot commands: "What is the attendance policy?" | "Tell me about exam rules" | 
+"Search grading policies"
+3.10  Policy Management Page  (/Admin/Policies)
+• Admin-only CRUD interface for the knowledge base
+• Rich-text editor (TinyMCE) for policy content with formatting
+• Keywords field for optimizing chatbot search accuracy
+• Version history tracking — each save creates a new version record
+• Chatbot commands: "Add policy: Title — Exam Rules, Category — Examinations, Content 
+— ..."
+ASP.NET MVC | JavaScript | MSSQL | OpenAI / Dialogflow CX
+Page 
+Academic Chatbot Web Application v2.0 — Full Project Plan
+Confidential | 2024–25
+3.11  Dedicated Chatbot Interface Page  (/Chatbot/Index)
+Route
+/Chatbot/Index
+Access
+All Roles
+Controller
+ChatbotController → Index(), SendMessage(), GetHistory(), 
+ExecuteAction()
+View
+Chatbot/Index.cshtml — full-page chat UI with sidebar
+The chatbot also exists as a floating widget (bottom-right) on EVERY other page. The 
+/Chatbot/Index page is the full-screen, full-feature version with history, session management, 
+and a command palette.
+• Full-page chat window with conversation history on left sidebar
+• Message input with voice input support (Web Speech API)
+• Command palette: click "/" to see all available chatbot commands
+• Intent display badge on each bot response showing detected intent and confidence %
+• Action confirmation cards: when chatbot is about to perform a write operation (enroll, book, 
+cancel), it shows a confirmation card before executing
+• Navigation actions: chatbot can push the browser to a new page using window.location
+• File upload: student can upload a document and chatbot summarizes it or routes to advisor
+• Session history: past conversations stored and searchable
+• Thumbs up/down rating per bot response for training data collection
+3.12  Appointment Booking Page  (/Appointments/Book)
+Route
+/Appointments/Book
+Access
+Student
+Controller
+AppointmentsController → Book(), ConfirmBook()
+View
+Appointments/Book.cshtml — step-by-step booking wizard
+• Step 1: Select Faculty/Advisor from searchable dropdown
+• Step 2: Pick available date from calendar (fetches slots via AJAX)
+• Step 3: Select time slot (only available slots shown in green)
+• Step 4: Add title and description, confirm booking
+• Booking confirmation screen with appointment ID and calendar export (.ics)
+• Chatbot commands: "Book appointment with Prof. Ahmed on Friday at 3pm" | "Schedule 
+meeting with my advisor"
+3.13  Appointment Management Page  (/Appointments/Manage)
+• Faculty/Advisor view: all pending, confirmed, and completed appointments
+• Confirm / Cancel buttons on each row with optional cancellation note
+ASP.NET MVC | JavaScript | MSSQL | OpenAI / Dialogflow CX
+Page 
+Academic Chatbot Web Application v2.0 — Full Project Plan
+Confidential | 2024–25
+• Add meeting link (Zoom/Teams) to confirmed appointments
+• Filter by date range, status, student name
+• Chatbot commands: "Show my appointments" | "Confirm appointment #42" | "Cancel all 
+pending appointments"
+3.14  Appointment Calendar Page  (/Appointments/Calendar)
+• FullCalendar.js integration — month, week, and day views
+• Color-coded events: Pending (yellow), Confirmed (green), Cancelled (red)
+• Click on event to see details, change status, or add meeting link
+• Chatbot commands: "Open my calendar" | "Show appointments for this week"
+3.15  Availability Settings Page  (/Faculty/Availability)
+• Faculty sets recurring weekly slots (e.g., Monday & Wednesday 2pm–5pm)
+• One-time slot exceptions (holidays, out-of-office dates)
+• Slots saved to AppointmentSlots table and reflected immediately on booking page
+• Chatbot commands: "Set my availability Monday 2pm to 4pm" | "Block Tuesday next week"
+ASP.NET MVC | JavaScript | MSSQL | OpenAI / Dialogflow CX
+Page 
+Academic Chatbot Web Application v2.0 — Full Project Plan
+Confidential | 2024–25
+3.16  Analytics Dashboard Page  (/Analytics/Dashboard)
+Route
+/Analytics/Dashboard
+Access
+Admin (full), Faculty (own courses only)
+Controller
+AnalyticsController → Dashboard()
+View
+Analytics/Dashboard.cshtml — widget grid with Chart.js charts
+• Date range picker — filters all charts simultaneously (AJAX refresh)
+• KPI cards: Total Sessions, Messages, Resolution Rate, Avg Response Time
+• Line chart: Daily chatbot sessions over selected period
+• Bar chart: Messages by hour of day (peak usage identification)
+• Doughnut chart: Resolved vs Unresolved queries
+• Horizontal bar chart: Top 10 chatbot intents by frequency
+• Table: List of most-asked questions with intent, count, last asked
+• Chatbot commands: "Show analytics" | "How many sessions today?" | "What is the 
+resolution rate this week?"
+3.17  Sentiment Analysis Page  (/Analytics/Sentiment)
+• Stacked area chart: Positive / Neutral / Negative feedback over time
+• Sentiment heatmap by course or faculty member
+• Latest feedback table with sentiment badge (color-coded)
+• Word cloud of most frequent positive and negative terms
+• Export to CSV/PDF via /Admin/Reports
+• Chatbot commands: "Show sentiment trends" | "Feedback analysis for CS101" | "What are 
+students saying?"
+3.18  Chatbot Analytics Page  (/Analytics/Chatbot)
+• Accuracy metrics: intent recognition rate, fallback rate, avg confidence score
+• Session table: all sessions with duration, message count, resolution status
+• Intent breakdown: pie chart of intent distribution across all sessions
+• Training data view: low-confidence messages that need review/re-training
+• Chatbot commands: "Show chatbot stats" | "Accuracy report" | "Show low confidence 
+messages"
+3.19  Feedback Submission Page  (/Feedback/Submit)
+Route
+/Feedback/Submit
+Access
+Student
+Controller
+FeedbackController → Submit(), ConfirmSubmit()
+View
+Feedback/Submit.cshtml — tabbed form by feedback type
+ASP.NET MVC | JavaScript | MSSQL | OpenAI / Dialogflow CX
+Page 
+Academic Chatbot Web Application v2.0 — Full Project Plan
+Confidential | 2024–25
+• Tabs: Course Feedback | Faculty Feedback | Chatbot Feedback | General System 
+Feedback
+• Star rating (1–5) with animated star selector
+• Free-text feedback area with character count
+• On submit: text is sent to Sentiment Analysis API, score returned and stored
+• Confirmation message showing detected sentiment for transparency
+• Chatbot commands: "Submit feedback for CS101: Great course, very helpful, 5 stars" | 
+"Rate my chatbot experience"
+3.20  Feedback Management Page  (/Admin/Feedback)
+• Admin/Faculty view of all received feedback with sentiment labels
+• Filter by type, rating, sentiment label, date range, course
+• Re-run sentiment analysis on bulk feedback (background job via Hangfire)
+• Respond to feedback (Faculty to Student) — response stored and notified
+• Chatbot commands: "View all feedback" | "Show negative feedback for CS201" | "Export 
+feedback report"
+3.21  Notifications Page  (/Notifications/Index)
+• Paginated list of all notifications with read/unread status
+• Click to mark as read, bulk "Mark All Read" button
+• Filter by type: Appointment, Course, System, Chatbot
+• Real-time badge on bell icon using SignalR push
+• Chatbot commands: "Show notifications" | "Mark all as read" | "Show unread messages"
+3.22  Knowledge Base Search Page  (/KnowledgeBase/Search)
+• Dedicated full-text search page for academic policies and FAQs
+• Search results show policy title, category, relevance score, excerpt with keyword highlight
+• Clicking a result opens /Policies/Detail/{id}
+• Chatbot commands: "Search knowledge base for exam rules" | "Find policy about 
+plagiarism"
+3.23  Admin User Management Page  (/Admin/Users)
+Route
+/Admin/Users
+Access
+Admin Only
+Controller
+AdminController → Users(), CreateUser(), EditUser(), DeactivateUser()
+View
+Admin/Users.cshtml — data table with inline edit and modal forms
+• Searchable, paginated DataTable of all users with role filter
+• Create User modal — fills Users table + Students or Faculty extension table
+• Edit User — change role, department, status
+• Deactivate User — sets IsActive=0, user can no longer log in
+ASP.NET MVC | JavaScript | MSSQL | OpenAI / Dialogflow CX
+Page 
+Academic Chatbot Web Application v2.0 — Full Project Plan
+Confidential | 2024–25
+• Reset Password — sends reset email via SMTP
+• Chatbot commands: "Add new user: Jane Doe, Faculty, Computer Science" | "Deactivate 
+student STU2024010" | "List all faculty"
+3.24  Audit Log Page  (/Admin/AuditLog)
+• Searchable log of all user and chatbot actions with timestamp, IP address
+• Filter by user, action type, table affected, date range
+• Color-coded severity: Create (green), Update (blue), Delete (red)
+• "PerformedBy" column distinguishes Human vs Chatbot actions
+• Chatbot commands: "Show audit log" | "Recent admin actions" | "Who deleted user #42?"
+3.25  Reports Page  (/Admin/Reports)
+• Generate and download PDF/Excel reports: Analytics, Sentiment, Appointments, Courses, 
+Feedback
+• Date range selection, filters by role/department/course before generation
+• Background generation via Hangfire — email notification when ready
+• Reports table: history of generated reports with download links
+• Chatbot commands: "Generate analytics report for October" | "Export all feedback as PDF"
+3.26  Settings Page  (/Account/Settings)
+• Change password with current password verification
+• Update notification preferences (email, in-app, push toggles)
+• Chatbot settings: toggle chatbot widget visibility, default greeting language
+• 2FA setup (optional) — authenticator app QR code
+• Chatbot commands: "Open settings" | "Change my password" | "Disable chatbot 
+notifications
+
+
+
+7. Role-Based Access Control
+Every controller action is protected with [Authorize(Roles="...")] attributes. The shared navigation 
+layout (_Layout.cshtml) uses @User.IsInRole("Student") conditions to show/hide menu items. The 
+chatbot also enforces role restrictions — admin-only commands are rejected with an appropriate 
+message if issued by a non-admin user.
+Feature / Page Student Faculty Advisor Admin
+Login Page Yes Yes Yes Yes
+Role 
+Dashboard Own Own Own Full view
+Profile Own Own Own All users
+Course Catalog View+Enroll View+Manage View Full CRUD
+My Courses Yes Assigned only No All courses
+Course 
+Recommendati
+ons
+Yes No No Configure
+Policies / 
+Knowledge 
+Base
+Read Read Read Full CRUD
+Chatbot 
+Interface Yes Yes Yes Yes + Admin cmds
+Appointment 
+Booking Book only No No View all
+Appt 
+Management View own Confirm/
+Cancel Confirm/Cancel Full
+Appt Calendar No Yes Yes All
+Availability 
+Settings No Own Own All
+Analytics 
+Dashboard No Own courses No Full system
+Sentiment 
+Analysis No Own courses No Full system
+Chatbot 
+Analytics No No No Yes
+Feedback 
+Submission Yes No No No
+Feedback No Own courses No Full
+ASP.NET MVC | JavaScript | MSSQL | OpenAI / Dialogflow CX Page 
+Academic Chatbot Web Application v2.0 — Full Project Plan
+Advisor
+Confidential | 2024–25
+Feature / Page
+Student
+Faculty
+Admin
+Management
+Notifications
+Own
+Own
+Own
+Broadcast
+User 
+Management No No No Full CRUD
+Audit Log
+No
+No
+No
+Yes
+Reports No Own courses No Full
+Settings
+Own
+Own
+Own
+System confi
